@@ -1,0 +1,6 @@
+{
+  "name": "geecko-landing",
+  "private": true,
+  "type": "module",
+  "description": "Landing de Geecko Craft: HTML, CSS y JavaScript sin framework, con una función de Vercel para el formulario."
+}
