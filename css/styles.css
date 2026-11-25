@@ -232,7 +232,6 @@ form{display:grid;gap:30px}
 .campo input:focus,.campo textarea:focus{outline:0;border-bottom-color:var(--piel-leg)}
 #panel-escribir{display:grid;gap:6px}
 .contador{justify-self:end;color:var(--niebla)}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:none;border:1px solid var(--grafito);color:var(--papel);padding:9px 14px;cursor:pointer;font-family:var(--f-mono);font-variation-settings:'wdth' 80;font-size:12.5px}
 .chip[aria-pressed="true"]{background:var(--papel);color:var(--tinta);border-color:var(--papel)}
@@ -267,19 +266,6 @@ form{display:grid;gap:30px}
 @media (prefers-reduced-motion:no-preference){.sello:not([hidden]){animation:sella .5s cubic-bezier(.3,1.6,.5,1) both}}
 @keyframes sella{from{transform:rotate(-8deg) scale(1.8);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
 
-/* idea: escribir o hablar */
-.modos{display:inline-flex;border:1px solid var(--grafito);justify-self:start}
-.modo{background:none;border:0;color:var(--niebla);padding:9px 14px;cursor:pointer;font-family:var(--f-mono);font-variation-settings:'wdth' 80;font-size:12.5px;display:inline-flex;gap:8px;align-items:center}
-.modo .ico{width:16px;height:16px}
-.modo[aria-selected="true"]{background:var(--papel);color:var(--tinta)}
-.voz{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;border-bottom:1px solid var(--grafito);padding:12px 0}
-.grabar{width:64px;height:64px;border:0;background:var(--piel-fondo);color:var(--piel-txt);cursor:pointer;display:grid;place-items:center;position:relative}
-.grabar .ico{width:26px;height:26px}
-.grabar.on::before{content:"";position:absolute;inset:-6px;border:2px solid var(--piel-leg);animation:latido-c 1.4s ease-out infinite}
-@keyframes latido-c{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.35)}}
-#onda{width:100%;height:56px;display:block}
-.tiempo-voz{font-family:var(--f-mono);font-variation-settings:'wdth' 85;font-size:15px;font-variant-numeric:tabular-nums;color:var(--papel)}
-.voz-nota{color:var(--niebla);font-size:13.5px;grid-column:1/-1}
 
 /* ---------- contacto ---------- */
 .ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
@@ -385,27 +371,30 @@ html.anim [data-fx="campos"].in>*:nth-child(5){transition-delay:.4s}
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .cinta,.tipeo::after,.punto::after,.grabar.on::before,.commit .hash.parpadea{animation:none}
+  .cinta,.tipeo::after,.punto::after,.commit .hash.parpadea{animation:none}
   #terreno{display:none}
 }
 
-/* proyectos en teléfono/tablet: una tarjeta por pantalla, entra entera en el viewport y el swipe encaja de a una */
+/* proyectos en teléfono/tablet: lista vertical con el scroll nativo (sin carrusel que pelee con el dedo) */
 @media (max-width:899px){
-  .carril{scroll-snap-type:x mandatory;scroll-padding-inline:max(16px,env(safe-area-inset-left,0px));overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:24px}
-  .carril::-webkit-scrollbar{display:none}
-  .pista{gap:12px}
-  .pista>li{scroll-snap-align:start;scroll-snap-stop:always}
-  .caso,.caso-tuyo{width:calc(100vw - 2 * max(16px,env(safe-area-inset-left,0px)));max-width:560px;height:min(calc(100svh - 96px),760px);grid-template-rows:auto minmax(0,1fr);overflow:hidden}
-  .caso-info{gap:10px;padding:20px}
-  .caso h3{font-size:clamp(38px,11vw,56px);margin-top:0}
-  .caso-p{font-size:15px;line-height:1.45}
-  .caso-vis{min-height:0;padding:16px;container-type:size}
+  .carril{overflow:visible;scroll-snap-type:none;padding-bottom:8px}
+  .pista{flex-direction:column;width:auto;gap:16px}
+  .pista>li{display:block;scroll-snap-align:none}
+  .caso,.caso-tuyo{width:auto;max-width:640px}
+  .caso-vis{order:-1;min-height:0;height:clamp(220px,62vw,340px);padding:20px;border-top:0;border-bottom:1px solid var(--grafito);container-type:size}
   .caso-vis img,.caso-tel img,.caso-alto img{max-height:100cqh;max-width:100%;width:auto;height:auto}
+  .caso-ancho img{width:auto}
   .caso-tel img{border-radius:20px}
-  .caso-ancho img{width:100%}
-  .caso-tuyo{padding:24px;justify-content:center}
+  .caso-info{gap:10px;padding:20px 20px 22px}
+  .caso h3{font-size:clamp(38px,11vw,56px);margin-top:0}
+  .caso-p{font-size:15px;line-height:1.5}
+  .caso-tuyo{padding:28px 24px}
+  .caso:hover .caso-vis img{transform:none}
 }
-@media (max-width:899px) and (max-height:640px){.caso-p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}}
+/* escritorio: barra de progreso del carril fijado */
+.carril-prog{display:none}
+html.anim .proyectos.pin .carril-prog{display:block;height:2px;background:var(--linea);margin:22px max(40px,env(safe-area-inset-left,0px)) 0;overflow:hidden}
+.carril-prog i{display:block;height:100%;background:var(--piel-fondo);transform-origin:0 50%;transform:scaleX(0)}
 
 /* escritorio: las notas acompañan solo al encabezado; el contenido usa todo el ancho (sin columna vacía a la derecha) */
 @media (min-width:1040px){

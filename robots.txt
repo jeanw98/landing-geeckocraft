@@ -1,7 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /gracias.html
 Disallow: /reference/
 
 Sitemap: https://geeckocraft.com/sitemap.xml

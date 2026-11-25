@@ -41,8 +41,8 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=Martian+Mono:wdth,wght@75..112.5,400;75..112.5,600&amp;display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=Martian+Mono:wdth,wght@75..112.5,400;75..112.5,600&amp;display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=Martian+Mono:wdth,wght@75..112.5,400;75..112.5,600&amp;display=swap"></noscript>
-<link rel="stylesheet" href="css/styles.css">
-<script src="js/main.js" defer></script>
+<link rel="stylesheet" href="css/styles.css?v=20261124">
+<script src="js/main.js?v=20261124" defer></script>
 
 <script type="application/ld+json">
 {
@@ -187,7 +187,7 @@
           <p class="intro">Salud, café, retail y perfumería. Cada proyecto lleva el gecko pintado con el color de su marca: así nos adaptamos.</p>
         </div>
         <aside class="notas" aria-label="Comentarios">
-          <p class="nota">En escritorio, esta sección avanza de lado mientras bajas. En el teléfono, deslízala.</p>
+          <p class="nota">En escritorio, esta sección avanza de lado mientras bajas.</p>
         </aside>
       </div>
     </div>
@@ -411,38 +411,23 @@
       <div>
         <p class="etq">Tu propuesta</p>
         <h2 id="titulo-muda">¿Buscas<br>construir <span class="relleno">algo?</span></h2>
-        <p class="intro">Cuéntanoslo como te salga: escribiendo o con una nota de voz. Con eso te armamos una propuesta de creación con precio y tiempo, y te la mandamos por WhatsApp o correo en menos de 24 horas hábiles. Sin llamadas de ventas.</p>
+        <p class="intro">Cuéntanoslo como te salga, en una frase. Te dejamos el mensaje listo en WhatsApp o en tu correo; si prefieres, ahí mismo nos mandas una nota de voz. Con eso te armamos una propuesta con precio y tiempo en menos de 24 horas hábiles. Sin llamadas de ventas.</p>
 
         <div class="muda">
-          <form id="form-muda" action="/api/propuesta" method="post" enctype="multipart/form-data" novalidate>
+          <form id="form-muda" action="https://wa.me/593963124031" method="get" target="_blank" novalidate>
             <div class="campo">
               <label for="idea">1 · Tu idea, como te salga</label>
-              <div class="modos" role="tablist" aria-label="Cómo quieres contarnos tu idea" hidden>
-                <button class="modo" type="button" role="tab" id="tab-escribir" aria-selected="true" aria-controls="panel-escribir"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Escribir</button>
-                <button class="modo" type="button" role="tab" id="tab-hablar" aria-selected="false" aria-controls="panel-hablar" tabindex="-1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg>Hablar</button>
-              </div>
-              <div id="panel-escribir" role="tabpanel" aria-labelledby="tab-escribir">
-                <textarea id="idea" name="idea" rows="2" maxlength="400" placeholder="una app para reservar canchas de indor en Cuenca" aria-describedby="contador"></textarea>
+              <div>
+                <textarea id="idea" name="text" rows="2" maxlength="400" placeholder="una app para reservar canchas de indor en Cuenca" aria-describedby="contador"></textarea>
                 <span class="contador mono" id="contador" aria-live="polite">0/400</span>
-              </div>
-              <div id="panel-hablar" role="tabpanel" aria-labelledby="tab-hablar" hidden>
-                <div class="voz">
-                  <button class="grabar" id="grabar" type="button" aria-label="Grabar nota de voz"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg></button>
-                  <canvas id="onda" aria-hidden="true"></canvas>
-                  <span class="tiempo-voz" id="t-voz">0:00</span>
-                  <p class="voz-nota" id="voz-nota" aria-live="polite">Toca el micrófono y cuéntanos tu idea en menos de 2 minutos. Vuelve a tocarlo para terminar.</p>
-                </div>
               </div>
             </div>
             <fieldset class="campo">
-              <legend>2 · ¿Por dónde te mandamos la propuesta?</legend>
+              <legend>2 · ¿Por dónde nos escribes?</legend>
               <div class="chips" role="group" aria-label="Canal">
                 <button class="chip" type="button" data-canal="WhatsApp" aria-pressed="true">WhatsApp</button>
                 <button class="chip" type="button" data-canal="Correo" aria-pressed="false">Correo</button>
               </div>
-              <input type="hidden" name="canal" id="canal" value="WhatsApp">
-              <label class="sr-only" for="contacto">Tu WhatsApp con código de país, o tu correo</label>
-              <input type="tel" id="contacto" name="contacto" autocomplete="tel" inputmode="tel" placeholder="+593 · tu número de WhatsApp" required>
             </fieldset>
             <fieldset class="campo">
               <legend>3 · Presupuesto aproximado (opcional, sin juicio)</legend>
@@ -453,7 +438,6 @@
                 <button class="chip" type="button" data-pres="Más de $8.000" aria-pressed="false">$8k +</button>
                 <button class="chip" type="button" data-pres="Todavía no sé" aria-pressed="false">ni idea, ayúdenme</button>
               </div>
-              <input type="hidden" name="presupuesto" id="presupuesto" value="">
             </fieldset>
             <fieldset class="campo">
               <legend>4 · El color de tu marca (opcional: el gecko se lo pone)</legend>
@@ -465,13 +449,12 @@
                 <label class="sw otro"><span class="sr-only">Otro color</span><input type="color" id="color-propio" value="#E11D48"></label>
                 <span class="mono tenue">o el tuyo exacto →</span>
               </div>
-              <input type="hidden" name="color" id="color" value="">
+              <input type="hidden" id="color" value="">
             </fieldset>
-            <div class="hp" aria-hidden="true"><label for="empresa">No llenes este campo</label><input type="text" id="empresa" name="empresa" tabindex="-1" autocomplete="off"></div>
             <div style="display:grid;gap:10px">
               <button class="boton" type="submit">
                 <svg viewBox="112 0 172 246" aria-hidden="true" focusable="false"><use href="#gk" style="stroke:currentColor;stroke-width:3px;fill:none"/></svg>
-                <span>Enviar mi idea</span>
+                <span>Enviar por WhatsApp</span>
               </button>
               <p class="error mono" id="error" role="alert"></p>
             </div>
@@ -487,7 +470,7 @@
 
           <article class="ficha" aria-live="polite" aria-label="Tu propuesta">
             <div class="ficha-cab mono"><span id="f-num">piel #----</span><span id="f-hex" class="tenue">degradado</span></div>
-            <span class="sello" id="sello" hidden>RECIBIDO</span>
+            <span class="sello" id="sello" hidden>LISTO</span>
             <div class="ficha-lienzo">
               <svg viewBox="109 -7 175 260" aria-hidden="true" focusable="false"><use href="#gk" class="gecko-use dibuja"/></svg>
             </div>
@@ -495,16 +478,16 @@
               <p class="ficha-idea vacia" id="f-idea">Tu idea aparece aquí mientras escribes.</p>
               <dl class="kv mono">
                 <dt>presupuesto</dt><dd id="f-pres">por definir</dd>
-                <dt>propuesta por</dt><dd id="f-canal">WhatsApp</dd>
+                <dt>canal</dt><dd id="f-canal">WhatsApp</dd>
                 <dt>respuesta</dt><dd>&lt; 24 h hábiles</dd>
               </dl>
             </div>
             <div class="ahora" id="ahora" hidden>
-              <a class="ya" id="ya-wa" href="https://wa.me/593963124031" target="_blank" rel="noopener">¿No quieres esperar? Ábrelo ya en WhatsApp ↗</a>
+              <a class="ya" id="ya-wa" href="https://wa.me/593963124031" target="_blank" rel="noopener">¿No se abrió WhatsApp? Toca aquí ↗</a>
               <p class="etq">Qué pasa ahora</p>
               <ol>
-                <li>Hoy mismo lo lee o lo escucha alguien del equipo, una persona de verdad.</li>
-                <li>En menos de 24 horas hábiles te llega la propuesta con rango de precio y de tiempo, por el canal que elegiste.</li>
+                <li>Envías el mensaje que te dejamos listo. Hoy mismo lo lee alguien del equipo, una persona de verdad.</li>
+                <li>En menos de 24 horas hábiles te llega la propuesta con rango de precio y de tiempo, por el mismo chat o correo.</li>
                 <li>Si no somos los indicados para tu proyecto, te recomendamos a alguien que sí lo sea.</li>
               </ol>
             </div>
@@ -512,9 +495,9 @@
         </div>
       </div>
       <aside class="notas" aria-label="Comentarios">
-        <p class="nota">Nadie se ha emocionado nunca con un botón que dice "Contáctanos". Aquí la persona escribe o habla, y eso ya es una propuesta.</p>
+        <p class="nota">Nadie se ha emocionado nunca con un botón que dice "Contáctanos". Aquí la persona escribe su idea, y eso ya es una propuesta.</p>
         <p class="nota">Al enviar, toda la página se pinta con tu color. Es el mismo sistema de "pieles" que usamos con cada cliente.</p>
-        <p class="nota">El texto o el audio nos llega al correo y al WhatsApp del estudio.</p>
+        <p class="nota">Tu mensaje llega directo al WhatsApp o al correo del estudio, sin intermediarios.</p>
       </aside>
     </div>
   </section>

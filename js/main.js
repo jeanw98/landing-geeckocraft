@@ -4,8 +4,6 @@
   'use strict';
 
   var CONTACTO={whatsapp:'593963124031', email:'contacto@geeckocraft.com'};
-  var API='/api/propuesta';
-  var MAX_AUDIO=4*1024*1024;
 
   var root=document.documentElement, body=document.body;
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -116,23 +114,23 @@
   }
   addEventListener('scroll',dockScroll,{passive:true});dockScroll();
 
-  /* ================= formulario ================= */
+  /* ================= formulario: arma el mensaje y lo abre en WhatsApp o en el correo ================= */
   var form=byId('form-muda'), idea=byId('idea'), fIdea=byId('f-idea'), contador=byId('contador');
-  var inpC=byId('contacto'), err=byId('error'), boton=form.querySelector('.boton'), botonTxt=boton.querySelector('span');
+  var err=byId('error'), boton=form.querySelector('.boton'), botonTxt=boton.querySelector('span');
 
   $('.chip[data-pres]').forEach(function(c){c.addEventListener('click',function(){
     var ya=state.pres===c.dataset.pres;
     state.pres=ya?null:c.dataset.pres;
     $('.chip[data-pres]').forEach(function(o){o.setAttribute('aria-pressed',String(!ya&&o===c))});
-    byId('presupuesto').value=state.pres||'';
     byId('f-pres').textContent=state.pres||'por definir';
   })});
 
   function pintarIdea(){
     var v=idea.value.trim();
-    fIdea.textContent=v?'“'+v+'”':(voz.blob?'Nota de voz · '+fmtT(voz.seg):'Tu idea aparece aquí mientras escribes.');
-    fIdea.classList.toggle('vacia',!v&&!voz.blob);
+    fIdea.textContent=v?'“'+v+'”':'Tu idea aparece aquí mientras escribes.';
+    fIdea.classList.toggle('vacia',!v);
     contador.textContent=idea.value.length+'/400';
+    if(v) err.textContent='';
   }
   idea.addEventListener('input',pintarIdea);
 
@@ -142,136 +140,36 @@
 
   $('.chip[data-canal]').forEach(function(c){c.addEventListener('click',function(){
     state.canal=c.dataset.canal;
-    var wa=state.canal==='WhatsApp';
     $('.chip[data-canal]').forEach(function(o){o.setAttribute('aria-pressed',String(o===c))});
-    byId('canal').value=state.canal;
-    inpC.type=wa?'tel':'email';
-    inpC.placeholder=wa?'+593 · tu número de WhatsApp':'tu@correo.com';
-    inpC.setAttribute('autocomplete',wa?'tel':'email');
-    inpC.setAttribute('inputmode',wa?'tel':'email');
     byId('f-canal').textContent=state.canal;
+    botonTxt.textContent=state.canal==='WhatsApp'?'Enviar por WhatsApp':'Enviar por correo';
   })});
 
-  /* ---- escribir o hablar ---- */
-  var puedeGrabar=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
-  var tabs={escribir:byId('tab-escribir'),hablar:byId('tab-hablar')}, modoActual='escribir';
-  if(puedeGrabar) document.querySelector('.modos').hidden=false;
-  function modo(m,foco){
-    modoActual=m;
-    Object.keys(tabs).forEach(function(k){
-      tabs[k].setAttribute('aria-selected',String(k===m));
-      tabs[k].tabIndex=k===m?0:-1;
-      byId('panel-'+k).hidden=k!==m;
-    });
-    if(foco) tabs[m].focus();
-    if(m==='hablar') dibujaOnda(null);
-  }
-  tabs.escribir.addEventListener('click',function(){modo('escribir')});
-  tabs.hablar.addEventListener('click',function(){modo('hablar')});
-  document.querySelector('.modos').addEventListener('keydown',function(e){
-    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();modo(modoActual==='escribir'?'hablar':'escribir',true)}
-  });
-
-  var voz={seg:0,grabando:false,iv:null,rec:null,stream:null,an:null,ac:null,raf:0,partes:[],blob:null,tipo:''};
-  var bG=byId('grabar'), cvO=byId('onda'), tV=byId('t-voz'), nV=byId('voz-nota'), historial=[];
-  function fmtT(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
-  function dibujaOnda(datos){
-    var r=cvO.getBoundingClientRect(), d=Math.min(devicePixelRatio||1,2); if(!r.width) return;
-    cvO.width=r.width*d;cvO.height=r.height*d;var c=cvO.getContext('2d');c.scale(d,d);c.clearRect(0,0,r.width,r.height);
-    var n=Math.floor(r.width/6), col=getComputedStyle(root).getPropertyValue('--piel-leg').trim()||'#00C8CF';
-    c.fillStyle=voz.grabando||voz.blob?col:'#3A3A36';
-    for(var i=0;i<n;i++){var v=datos?datos[i]:.08;var h=Math.max(2,v*r.height);c.fillRect(i*6,(r.height-h)/2,3,h)}
-  }
-  function bucle(){
-    var v=0;
-    if(voz.an){var a=new Uint8Array(voz.an.fftSize);voz.an.getByteTimeDomainData(a);var s=0;for(var i=0;i<a.length;i++){var x=(a[i]-128)/128;s+=x*x}v=Math.min(1,Math.sqrt(s/a.length)*4)}
-    historial.push(v);var n=Math.floor(cvO.getBoundingClientRect().width/6);while(historial.length>n)historial.shift();
-    dibujaOnda(new Array(Math.max(0,n-historial.length)).fill(.06).concat(historial));
-    voz.raf=requestAnimationFrame(bucle);
-  }
-  function tipoAudio(){
-    var t=['audio/webm;codecs=opus','audio/webm','audio/mp4;codecs=mp4a.40.2','audio/mp4'];
-    for(var i=0;i<t.length;i++) if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t[i])) return t[i];
-    return '';
-  }
-  function empezar(st){
-    voz.stream=st;voz.partes=[];voz.blob=null;voz.seg=0;historial=[];
-    try{voz.ac=new (window.AudioContext||window.webkitAudioContext)();var src=voz.ac.createMediaStreamSource(st);voz.an=voz.ac.createAnalyser();voz.an.fftSize=512;src.connect(voz.an)}catch(e){voz.an=null}
-    var tipo=tipoAudio();
-    voz.rec=tipo?new MediaRecorder(st,{mimeType:tipo,audioBitsPerSecond:48000}):new MediaRecorder(st);
-    voz.tipo=voz.rec.mimeType||tipo||'audio/webm';
-    voz.rec.ondataavailable=function(e){if(e.data&&e.data.size)voz.partes.push(e.data)};
-    voz.rec.onstop=function(){
-      voz.blob=voz.partes.length?new Blob(voz.partes,{type:voz.tipo}):null;
-      if(voz.blob&&voz.blob.size>MAX_AUDIO){voz.blob=null;nV.textContent='La nota quedó muy pesada. Graba una más corta o escribe tu idea.';}
-      else if(voz.blob){nV.textContent='Nota de voz lista ('+fmtT(voz.seg)+'). Toca el micrófono para grabarla de nuevo.';}
-      pintarIdea();dibujaOnda(historial.length?historial:null);
-    };
-    voz.rec.start(1000);
-    voz.grabando=true;tV.textContent='0:00';bG.classList.add('on');bG.setAttribute('aria-label','Terminar nota de voz');
-    nV.textContent='Grabando… vuelve a tocar para terminar.';
-    voz.iv=setInterval(function(){voz.seg++;tV.textContent=fmtT(voz.seg);if(voz.seg>=120)terminar()},1000);
-    bucle();
-  }
-  function terminar(){
-    voz.grabando=false;clearInterval(voz.iv);cancelAnimationFrame(voz.raf);
-    bG.classList.remove('on');bG.setAttribute('aria-label','Grabar de nuevo');
-    try{if(voz.rec&&voz.rec.state!=='inactive')voz.rec.stop()}catch(e){}
-    if(voz.stream)voz.stream.getTracks().forEach(function(t){t.stop()});
-    if(voz.ac&&voz.ac.close)voz.ac.close();
-    voz.stream=null;voz.an=null;voz.ac=null;
-  }
-  bG.addEventListener('click',function(){
-    if(voz.grabando){terminar();return;}
-    navigator.mediaDevices.getUserMedia({audio:true}).then(empezar,function(){
-      nV.textContent='No pudimos usar el micrófono. Revisa el permiso del navegador o escribe tu idea.';
-    });
-  });
-
-  /* ---- enviar ---- */
-  function waLink(texto){return 'https://wa.me/'+CONTACTO.whatsapp+'?text='+encodeURIComponent(texto)}
-  function resumen(texto,contacto){
-    return 'Hola Geecko Craft, quiero construir algo.\n\nIdea: '+(texto||'(les mandé una nota de voz de '+fmtT(voz.seg)+')')+
+  function mensaje(texto){
+    return 'Hola Geecko Craft, quiero construir algo.\n\nIdea: '+texto+
       '\nPresupuesto: '+(state.pres||'por definir')+
-      '\nColor de mi marca: '+(state.skin==='std'?'por definir':state.skin)+
-      '\nRespóndanme por '+state.canal+': '+contacto;
+      '\nColor de mi marca: '+(state.skin==='std'?'por definir':state.skin);
   }
-  function mostrarError(msg,conWa){
-    err.textContent=msg;
-    if(conWa){
-      var a=document.createElement('a');a.href=waLink(resumen(idea.value.trim(),inpC.value.trim()));a.target='_blank';a.rel='noopener';a.textContent='mándanosla por WhatsApp';
-      err.appendChild(document.createTextNode(' Mientras tanto, '));err.appendChild(a);err.appendChild(document.createTextNode('.'));
-    }
+  function enlace(texto){
+    var m=mensaje(texto);
+    return state.canal==='WhatsApp'
+      ?'https://wa.me/'+CONTACTO.whatsapp+'?text='+encodeURIComponent(m)
+      :'mailto:'+CONTACTO.email+'?subject='+encodeURIComponent('Quiero construir algo')+'&body='+encodeURIComponent(m);
   }
   form.addEventListener('submit',function(e){
     e.preventDefault();
-    if(state.enviando) return;
-    if(voz.grabando) terminar();
-    var contacto=inpC.value.trim(), texto=idea.value.trim();
-    if(!texto&&!voz.blob){mostrarError('Falta tu idea. Escribe una frase o graba una nota de voz.');(modoActual==='hablar'?bG:idea).focus();return;}
-    if(state.canal==='Correo'&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contacto)){mostrarError('Ese correo no parece completo. Revisa que tenga @ y dominio.');inpC.focus();return;}
-    if(state.canal==='WhatsApp'&&contacto.replace(/\D/g,'').length<9){mostrarError('Déjanos tu número de WhatsApp con código de país (+593 en Ecuador).');inpC.focus();return;}
+    var texto=idea.value.trim();
+    if(!texto){err.textContent='Cuéntanos tu idea en una frase, aunque sea corta.';idea.focus();return;}
     err.textContent='';
-
-    var fd=new FormData(form);
-    if(voz.blob) fd.append('audio',voz.blob,'nota-de-voz.'+(voz.tipo.indexOf('mp4')>-1?'m4a':'webm'));
-    if(voz.blob) fd.append('duracion',String(voz.seg));
-    state.enviando=true;boton.disabled=true;botonTxt.textContent='Enviando…';
-
-    fetch(API,{method:'POST',body:fd,headers:{Accept:'application/json'}})
-      .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok||!j.ok)throw new Error(j.error||'');return j})})
-      .then(function(j){
-        botonTxt.textContent='Enviado';
-        setSkin(state.skin==='std'?'#2E4BFF':state.skin,boton);
-        byId('f-num').textContent='propuesta #'+(j.id||'----');
-        byId('sello').hidden=false;
-        byId('ahora').hidden=false;
-        byId('ya-wa').href=waLink(resumen(texto,contacto));
-      })
-      .catch(function(ex){
-        state.enviando=false;boton.disabled=false;botonTxt.textContent='Enviar mi idea';
-        mostrarError(ex.message||'No pudimos enviar tu idea en este momento.',true);
-      });
+    var url=enlace(texto), wa=state.canal==='WhatsApp';
+    // se abre dentro del clic para que el navegador no lo bloquee
+    if(wa) window.open(url,'_blank','noopener'); else location.href=url;
+    var ya=byId('ya-wa');ya.href=url;ya.textContent=wa?'¿No se abrió WhatsApp? Toca aquí ↗':'¿No se abrió tu correo? Toca aquí ↗';
+    if(wa){ya.target='_blank';ya.rel='noopener'}else{ya.removeAttribute('target')}
+    setSkin(state.skin==='std'?'#2E4BFF':state.skin,boton);
+    byId('f-num').textContent='mensaje listo';
+    byId('sello').hidden=false;
+    byId('ahora').hidden=false;
   });
 
   /* ================= movimiento: un gesto distinto por sección ================= */
@@ -293,6 +191,7 @@
   fx('.ficha','gira');
   fx('.clasico','aparece');
   fx('.rara','desliza');
+  if(innerWidth<900) fx('.pista > li','desliza');
 
   // precios: palabras que se angostan
   $('[data-fx="ancho"]').forEach(function(h){
@@ -355,13 +254,23 @@
 
   // proyectos: carril horizontal fijado mientras bajas (escritorio)
   var proy=document.querySelector('.proyectos'), carril=byId('carril'), pista=byId('pista'), alto=null, dist=0;
+  var progCarril=document.createElement('div');progCarril.className='carril-prog';progCarril.setAttribute('aria-hidden','true');progCarril.innerHTML='<i></i>';carril.appendChild(progCarril);
+  var progI=progCarril.firstChild, xMeta=0, xAct=0, animX=0;
+  // el carril persigue al scroll con inercia: con rueda o trackpad se desliza en vez de saltar
+  function moverCarril(){
+    animX=0;
+    var d=xMeta-xAct; xAct=Math.abs(d)<.3?xMeta:xAct+d*.14;
+    pista.style.transform='translate3d('+(-xAct).toFixed(1)+'px,0,0)';
+    progI.style.transform='scaleX('+(dist?xAct/dist:0).toFixed(4)+')';
+    if(xAct!==xMeta) animX=requestAnimationFrame(moverCarril);
+  }
   function armarPin(){
     var on=innerWidth>=900;
     proy.classList.toggle('pin',on);
     if(on){
       if(!alto){alto=document.createElement('div');alto.className='carril-alto';carril.parentNode.insertBefore(alto,carril);alto.appendChild(carril);}
-      pista.style.transform='';dist=Math.max(0,pista.scrollWidth-innerWidth);
-      var hp=pista.offsetHeight;carril.style.setProperty('--h',hp+'px');
+      pista.style.transform='';xAct=xMeta=0;dist=Math.max(0,pista.scrollWidth-innerWidth);
+      var hp=carril.offsetHeight;carril.style.setProperty('--h',hp+'px');
       alto.style.height=(hp+dist)+'px';
     }else if(alto){alto.style.height='';pista.style.transform='';dist=0;}
   }
@@ -371,7 +280,7 @@
     if(!alto||!dist) return;
     var li=e.target.closest('.pista > li'); if(!li) return;
     var q=clamp((li.offsetLeft-40)/dist);
-    scrollTo({top:alto.getBoundingClientRect().top+scrollY-Math.max(16,(innerHeight-pista.offsetHeight)/2)+q*dist,behavior:'instant'});
+    scrollTo({top:alto.getBoundingClientRect().top+scrollY-Math.max(16,(innerHeight-carril.offsetHeight)/2)+q*dist,behavior:'instant'});
   });
 
   // precios: tabla fija mientras bajas (como proyectos); el scroll tacha de a uno; al soltar entra el mensaje
@@ -422,7 +331,7 @@
 
   function onScroll(){
     pend=false;
-    if(alto&&dist&&proy.classList.contains('pin')){var ar=alto.getBoundingClientRect();var topPin=Math.max(16,(innerHeight-pista.offsetHeight)/2);var q=clamp((topPin-ar.top)/dist);pista.style.transform='translate3d('+(-q*dist).toFixed(1)+'px,0,0)';}
+    if(alto&&dist&&proy.classList.contains('pin')){var ar=alto.getBoundingClientRect();var topPin=Math.max(16,(innerHeight-carril.offsetHeight)/2);xMeta=clamp((topPin-ar.top)/dist)*dist;if(!animX)animX=requestAnimationFrame(moverCarril);}
     tacharConScroll();
     var y=scrollY, max=root.scrollHeight-innerHeight;
     prog.style.transform='scaleX('+(max>0?y/max:0)+')';
