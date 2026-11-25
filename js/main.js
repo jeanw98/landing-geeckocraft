@@ -3,8 +3,7 @@
 (function(){
   'use strict';
 
-  // TODO Jean: número real de WhatsApp (también está en los enlaces wa.me del index.html).
-  var CONTACTO={whatsapp:'593000000000', email:'contacto@geeckocraft.com'};
+  var CONTACTO={whatsapp:'593963124031', email:'contacto@geeckocraft.com'};
   var API='/api/propuesta';
   var MAX_AUDIO=4*1024*1024;
 
