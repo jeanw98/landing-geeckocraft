@@ -146,7 +146,7 @@
     $('.chip[data-canal]').forEach(function(o){o.setAttribute('aria-pressed',String(o===c))});
     byId('canal').value=state.canal;
     inpC.type=wa?'tel':'email';
-    inpC.placeholder=wa?'+593 99 123 4567':'tu@correo.com';
+    inpC.placeholder=wa?'+593 · tu número de WhatsApp':'tu@correo.com';
     inpC.setAttribute('autocomplete',wa?'tel':'email');
     inpC.setAttribute('inputmode',wa?'tel':'email');
     byId('f-canal').textContent=state.canal;
@@ -250,7 +250,7 @@
     var contacto=inpC.value.trim(), texto=idea.value.trim();
     if(!texto&&!voz.blob){mostrarError('Falta tu idea. Escribe una frase o graba una nota de voz.');(modoActual==='hablar'?bG:idea).focus();return;}
     if(state.canal==='Correo'&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contacto)){mostrarError('Ese correo no parece completo. Revisa que tenga @ y dominio.');inpC.focus();return;}
-    if(state.canal==='WhatsApp'&&contacto.replace(/\D/g,'').length<9){mostrarError('Déjanos tu número de WhatsApp con código de país, por ejemplo +593 99 123 4567.');inpC.focus();return;}
+    if(state.canal==='WhatsApp'&&contacto.replace(/\D/g,'').length<9){mostrarError('Déjanos tu número de WhatsApp con código de país (+593 en Ecuador).');inpC.focus();return;}
     err.textContent='';
 
     var fd=new FormData(form);

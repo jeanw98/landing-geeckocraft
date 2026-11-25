@@ -42,7 +42,7 @@ export async function POST(request) {
   if (!idea && !hayAudio) return responder(400, { ok: false, error: 'Falta tu idea. Escribe una frase o graba una nota de voz.' });
   if (!CANALES.includes(canal)) return responder(400, { ok: false, error: 'Elige WhatsApp o correo.' });
   if (canal === 'Correo' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contacto)) return responder(400, { ok: false, error: 'Ese correo no parece completo. Revisa que tenga @ y dominio.' });
-  if (canal === 'WhatsApp' && contacto.replace(/\D/g, '').length < 9) return responder(400, { ok: false, error: 'Déjanos tu número de WhatsApp con código de país, por ejemplo +593 99 123 4567.' });
+  if (canal === 'WhatsApp' && contacto.replace(/\D/g, '').length < 9) return responder(400, { ok: false, error: 'Déjanos tu número de WhatsApp con código de país (+593 en Ecuador).' });
   if (!PRESUPUESTOS.includes(presupuesto)) return responder(400, { ok: false, error: 'Presupuesto no válido.' });
   if (color && !/^#[0-9a-f]{6}$/i.test(color)) return responder(400, { ok: false, error: 'Color no válido.' });
   if (hayAudio && audio.size > MAX_AUDIO) return responder(413, { ok: false, error: 'La nota de voz pesa demasiado. Graba una más corta o escribe tu idea.' });

@@ -1,0 +1,4 @@
+# archivos de desarrollo: quedan en el repo, no se publican
+PROMPT-claude-code.md
+reference/
+.env.example
