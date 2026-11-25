@@ -330,8 +330,8 @@ form{display:grid;gap:30px}
 /* ================= movimiento =================
    Un gesto por sección: hero=dibujo+terreno, precios=barrido, diferencias=pila, pasos=riel, bitácora=decodificar, formulario=giro, pie=ancho.
    Los estados ocultos solo existen con html.anim (lo pone el JS), así el contenido se ve aunque el JS falle. */
-#terreno{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s;
-  -webkit-mask-image:radial-gradient(120% 90% at 70% 45%,#000 30%,rgba(0,0,0,.45) 100%);mask-image:radial-gradient(120% 90% at 70% 45%,#000 30%,rgba(0,0,0,.45) 100%)}
+#terreno{position:fixed;top:0;left:0;width:100vw;height:100vh;height:100lvh;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s;will-change:opacity;
+  -webkit-mask-image:radial-gradient(120% 90% at 70% 45%,#000 25%,rgba(0,0,0,.3) 100%);mask-image:radial-gradient(120% 90% at 70% 45%,#000 25%,rgba(0,0,0,.3) 100%)}
 #terreno.on{opacity:1}
 .progreso{position:fixed;top:0;left:0;right:0;height:3px;z-index:50;pointer-events:none}
 .progreso i{display:block;height:100%;width:100%;background:var(--piel-fondo);transform-origin:0 50%;transform:scaleX(0)}
@@ -387,4 +387,60 @@ html.anim [data-fx="campos"].in>*:nth-child(5){transition-delay:.4s}
   html{scroll-behavior:auto}
   .cinta,.tipeo::after,.punto::after,.grabar.on::before,.commit .hash.parpadea{animation:none}
   #terreno{display:none}
+}
+
+/* proyectos en teléfono/tablet: una tarjeta por pantalla, entra entera en el viewport y el swipe encaja de a una */
+@media (max-width:899px){
+  .carril{scroll-snap-type:x mandatory;scroll-padding-inline:max(16px,env(safe-area-inset-left,0px));overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:24px}
+  .carril::-webkit-scrollbar{display:none}
+  .pista{gap:12px}
+  .pista>li{scroll-snap-align:start;scroll-snap-stop:always}
+  .caso,.caso-tuyo{width:calc(100vw - 2 * max(16px,env(safe-area-inset-left,0px)));max-width:560px;height:min(calc(100svh - 96px),760px);grid-template-rows:auto minmax(0,1fr);overflow:hidden}
+  .caso-info{gap:10px;padding:20px}
+  .caso h3{font-size:clamp(38px,11vw,56px);margin-top:0}
+  .caso-p{font-size:15px;line-height:1.45}
+  .caso-vis{min-height:0;padding:16px;container-type:size}
+  .caso-vis img,.caso-tel img,.caso-alto img{max-height:100cqh;max-width:100%;width:auto;height:auto}
+  .caso-tel img{border-radius:20px}
+  .caso-ancho img{width:100%}
+  .caso-tuyo{padding:24px;justify-content:center}
+}
+@media (max-width:899px) and (max-height:640px){.caso-p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}}
+
+/* escritorio: las notas acompañan solo al encabezado; el contenido usa todo el ancho (sin columna vacía a la derecha) */
+@media (min-width:1040px){
+  .sec{row-gap:0}
+  .sec>div{display:contents}
+  .sec>div>*{grid-column:1/-1;min-width:0}
+  .sec>div>.etq:first-child,.sec>div>h2,.sec>div>.intro{grid-column:1}
+  .sec>.notas{grid-column:2;grid-row:1/span 2;align-self:start;padding-top:4px}
+  .sec:has(>div>.intro)>.notas{grid-row:1/span 3}
+}
+
+/* precios: la tabla va sobre un panel sólido para que no se pierda con las curvas del fondo */
+.precios-sticky .tabla-scroll{background:color-mix(in srgb,var(--tinta-2) 94%,transparent);border:1px solid var(--linea);padding:10px 28px 4px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.precios-sticky tbody tr:last-child>*{border-bottom:0}
+td.incl{color:#b9b7ae}
+td.precio small{color:#a3a198}
+/* el tachado sigue al scroll (--s de 0 a 1, lo pone el JS), sin saltos ni retrasos */
+html.anim .monto{transition:none;color:color-mix(in srgb,var(--piel-leg) calc(100% - var(--s,0) * 55%),#8F8D83)}
+html.anim .monto::after{transition:none;transform:scaleX(var(--s,0));height:2.5px;border-radius:2px}
+html.anim .monto.tacha{color:color-mix(in srgb,var(--piel-leg) calc(100% - var(--s,0) * 55%),#8F8D83)}
+html.anim .monto.tacha::after{transform:scaleX(var(--s,0))}
+.caro{background:color-mix(in srgb,var(--tinta-2) 90%,transparent);padding:16px 20px;border-left-width:3px;max-width:none}
+html.anim .caro{transition:opacity .5s,transform .6s var(--curva)}
+
+/* teléfono: la tabla pasa a filas apiladas, sin deslizar de lado */
+@media (max-width:719px){
+  .precios-sticky .tabla-scroll{padding:4px 16px;overflow:visible}
+  #precios table{min-width:0}
+  #precios table,#precios tbody,#precios tr,#precios tbody th,#precios td{display:block}
+  #precios thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #precios tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:16px 0;border-bottom:1px solid var(--linea)}
+  #precios tbody tr:last-child{border-bottom:0}
+  #precios tbody th,#precios td{padding:0;border:0}
+  #precios .que{width:auto;font-size:20px;grid-column:1;grid-row:1}
+  #precios td.precio{grid-column:2;grid-row:1/span 2;text-align:right}
+  #precios td.tiempo{grid-column:1;grid-row:2;color:var(--niebla)}
+  #precios td.incl{grid-column:1/-1;font-size:14px;line-height:1.45}
 }

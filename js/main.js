@@ -378,32 +378,46 @@
   // precios: tabla fija mientras bajas (como proyectos); el scroll tacha de a uno; al soltar entra el mensaje
   var preciosAlto=byId('precios-alto'), preciosSticky=document.querySelector('#precios .precios-sticky');
   var tablaPrecios=document.querySelector('#precios .tabla-scroll');
-  var caro=document.querySelector('#precios .caro'), montosPrecios=[], distTacha=0, tachadosHasta=-1;
+  var caro=document.querySelector('#precios .caro'), montosPrecios=[], distTacha=0, pinPrecios=false, metaS=[], actS=[], animS=0;
   function armarPinPrecios(){
     if(!preciosAlto||!preciosSticky||!tablaPrecios) return;
     montosPrecios=$('.monto',tablaPrecios);
-    montosPrecios.forEach(function(m,k){m.style.setProperty('--d',(k*.07)+'s')});
     var h=tablaPrecios.offsetHeight;
-    distTacha=Math.round(innerHeight*(innerWidth<720?.95:1.4));
-    preciosAlto.classList.add('pin');
-    preciosAlto.style.height=(h+distTacha)+'px';
+    // solo se fija si la tabla entra entera en la pantalla; si no, se tacha fila por fila al pasar
+    pinPrecios=h<=innerHeight-32;
+    distTacha=pinPrecios?Math.round(innerHeight*(innerWidth<720?.8:1)):0;
+    preciosAlto.classList.toggle('pin',pinPrecios);
+    preciosAlto.style.height=pinPrecios?(h+distTacha)+'px':'';
     preciosAlto.style.setProperty('--ph',h+'px');
+    montosPrecios.forEach(function(m,i){if(actS[i]==null){actS[i]=0;metaS[i]=0}});
   }
   function tacharConScroll(){
-    if(!preciosAlto||!distTacha||!montosPrecios.length) return;
-    var ar=preciosAlto.getBoundingClientRect();
-    var topPin=Math.max(16,(innerHeight-tablaPrecios.offsetHeight)/2);
-    // q=0 al enganchar el sticky; q=1 al soltarlo (igual que proyectos)
-    var q=clamp((topPin-ar.top)/distTacha);
-    // precios limpios un momento, luego tacha de arriba a abajo con el scroll
-    var strike=clamp((q-.06)/.74);
-    var n=Math.min(montosPrecios.length, Math.floor(strike*montosPrecios.length+.0001));
-    if(n-1!==tachadosHasta){
-      montosPrecios.forEach(function(m,i){m.classList.toggle('tacha',i<n)});
-      tachadosHasta=n-1;
+    if(!preciosAlto||!montosPrecios.length) return;
+    var n=montosPrecios.length;
+    if(pinPrecios){
+      var ar=preciosAlto.getBoundingClientRect();
+      var topPin=Math.max(16,(innerHeight-tablaPrecios.offsetHeight)/2);
+      var q=clamp((topPin-ar.top)/distTacha);
+      // un respiro con los precios limpios y luego tacha de arriba a abajo; cada línea se solapa un poco con la siguiente
+      var strike=clamp((q-.08)/.78)*n;
+      montosPrecios.forEach(function(m,i){metaS[i]=clamp((strike-i)/1.15)});
+    }else{
+      montosPrecios.forEach(function(m,i){var r=m.getBoundingClientRect();metaS[i]=clamp((innerHeight*.72-r.top)/(innerHeight*.22))});
     }
-    // mensaje entra al terminar el tachado, cuando el pin ya suelta
-    if(caro) caro.classList.toggle('in',q>=.95&&tachadosHasta>=montosPrecios.length-1);
+    if(!animS) animS=requestAnimationFrame(suavizarTacha);
+  }
+  // el tachado persigue al scroll con una inercia corta: se ve fluido aunque la rueda avance a saltos
+  function suavizarTacha(){
+    animS=0;var sigue=false;
+    montosPrecios.forEach(function(m,i){
+      var d=metaS[i]-actS[i];
+      actS[i]=Math.abs(d)<.002?metaS[i]:actS[i]+d*.22;
+      if(actS[i]!==metaS[i]) sigue=true;
+      m.style.setProperty('--s',actS[i].toFixed(3));
+      m.classList.toggle('tacha',actS[i]>.5);
+    });
+    if(caro) caro.classList.toggle('in',actS[montosPrecios.length-1]>.98);
+    if(sigue) animS=requestAnimationFrame(suavizarTacha);
   }
   armarPinPrecios();addEventListener('resize',armarPinPrecios);
 
@@ -447,7 +461,7 @@
   'float mayor=1.-step(.5,mod(floor(k+.5),5.));'+
   'float l=1.-smoothstep(0.,w*(1.2+mayor*.9),g);'+
   'float s=clamp(uv.x*.45+(1.-uv.y)*.55,0.,1.);vec3 col=s<.5?mix(c1,c2,s*2.):mix(c2,c3,s*2.-1.);'+
-  'float halo=exp(-d*d*2.2);float al=l*(.17+mayor*.24+halo*.6)*amp;vec3 c=col*al+col*halo*.07*amp;o=vec4(c,max(al,halo*.07*amp));}';
+  'float halo=exp(-d*d*2.2);float al=l*(.11+mayor*.15+halo*.4)*amp;vec3 c=col*al+col*halo*.045*amp;o=vec4(c,max(al,halo*.045*amp));}';
   function sh(tipo,src){var s=gl.createShader(tipo);gl.shaderSource(s,src);gl.compileShader(s);return gl.getShaderParameter(s,gl.COMPILE_STATUS)?s:null}
   var v=sh(gl.VERTEX_SHADER,vs), f=sh(gl.FRAGMENT_SHADER,fs); if(!v||!f) return;
   var pr=gl.createProgram();gl.attachShader(pr,v);gl.attachShader(pr,f);gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) return;
@@ -459,40 +473,45 @@
   var STD=[rgb('#C2F04A'),rgb('#00C8CF'),rgb('#2E4BFF')], col=STD.map(function(c){return c.slice()}), meta=STD;
   document.addEventListener('gcpiel',function(e){var s=e.detail;meta=s==='std'?STD:[rgb(s),rgb(s),rgb(s)]});
   var movil=innerWidth<720;
-  var dpr=movil?Math.min(devicePixelRatio||1,1.25):Math.min(devicePixelRatio||1,1.5), W=0,H=0;
-  function talla(){var b=cv.getBoundingClientRect();W=Math.max(1,Math.round(b.width*dpr));H=Math.max(1,Math.round(b.height*dpr));cv.width=W;cv.height=H;gl.viewport(0,0,W,H)}
+  var dpr=movil?1:Math.min(devicePixelRatio||1,1.25), W=0,H=0;
+  function talla(){var b=cv.getBoundingClientRect(),nw=Math.max(1,Math.round(b.width*dpr)),nh=Math.max(1,Math.round(b.height*dpr));if(nw===W&&Math.abs(nh-H)<160*dpr&&W) return;W=nw;H=nh;cv.width=W;cv.height=H;gl.viewport(0,0,W,H)}
   talla();addEventListener('resize',talla);
   var mx=-9999,my=-9999,tx=-9999,ty=-9999,ultToque=-1e9;
   function apunta(x,y){tx=x*dpr;ty=(innerHeight-y)*dpr;if(mx<-9000){mx=tx;my=ty}ultToque=performance.now()}
   addEventListener('pointermove',function(e){apunta(e.clientX,e.clientY)},{passive:true});
   addEventListener('touchstart',function(e){var p=e.touches[0];if(p)apunta(p.clientX,p.clientY)},{passive:true});
   addEventListener('touchmove',function(e){var p=e.touches[0];if(p)apunta(p.clientX,p.clientY)},{passive:true});
-  // zonas donde el brillo sube: hero, proyectos, servicios, formulario y pie
-  var zonas=$('.hero-sec, #proyectos, #precios, #muda, .pie'), ampMeta=1, ampAct=0, scAct=0, velScroll=0, yPrev=scrollY;
+  // zonas donde el brillo sube: hero, proyectos, formulario y pie (en precios baja para que se lean los montos)
+  var zonas=$('.hero-sec, #proyectos, #muda, .pie'), ampMeta=1, ampAct=0, scAct=0, velScroll=0, yPrev=scrollY;
   function medirZonas(){
     var best=0;zonas.forEach(function(z){var r=z.getBoundingClientRect();var vis=Math.max(0,Math.min(innerHeight,r.bottom)-Math.max(0,r.top))/innerHeight;if(vis>best)best=vis});
-    ampMeta=(.4+.6*Math.min(1,best*1.4))*(movil?.7:1);
+    ampMeta=(.35+.45*Math.min(1,best*1.4))*(movil?.75:1);
   }
   addEventListener('scroll',function(){medirZonas();velScroll+=scrollY-yPrev;yPrev=scrollY},{passive:true});medirZonas();
-  var visible=true, ultimo=0, paso=movil?33:0, t0=performance.now();
-  new IntersectionObserver(function(es){visible=es[0].isIntersecting;if(visible)requestAnimationFrame(frame)}).observe(cv);
+  var visible=true, ultimo=0, t0=performance.now();
+  var corriendo=false;function arrancar(){if(!corriendo&&visible&&!document.hidden){corriendo=true;ultimo=0;requestAnimationFrame(frame)}}
+  new IntersectionObserver(function(es){visible=es[0].isIntersecting;arrancar()}).observe(cv);
+  // suavizado independiente de los fps: k es la fracción que avanza en dt segundos
+  function sigue(base,dt){return 1-Math.pow(1-base,dt*60)}
   function frame(ts){
-    if(!visible||document.hidden) return;
+    if(!visible||document.hidden){corriendo=false;return;}
     requestAnimationFrame(frame);
-    if(ts-ultimo<paso) return; ultimo=ts;
+    var dt=ultimo?Math.min(.05,(ts-ultimo)/1000):1/60; ultimo=ts;
     var tt=(ts-t0)/1000;
     if(ts-ultToque>2500){ // sin cursor ni dedo: el brillo pasea solo y reacciona al scroll
-      tx=W*(.62+.28*Math.sin(tt*.31));ty=H*(.55+.3*Math.cos(tt*.23))-velScroll*dpr*.6;if(mx<-9000){mx=tx;my=ty}
+      var empuje=Math.max(-H*.25,Math.min(H*.25,velScroll*dpr*.5));
+      tx=W*(.62+.28*Math.sin(tt*.31));ty=H*(.55+.3*Math.cos(tt*.23))-empuje;if(mx<-9000){mx=tx;my=ty}
     }
-    velScroll*=.9;
-    mx+=(tx-mx)*.06;my+=(ty-my)*.06;
-    ampAct+=(ampMeta-ampAct)*.05;scAct+=(scrollY/innerHeight*.55-scAct)*.08;
+    velScroll*=Math.pow(.9,dt*60);
+    var km=sigue(.045,dt);mx+=(tx-mx)*km;my+=(ty-my)*km;
+    ampAct+=(ampMeta-ampAct)*sigue(.035,dt);
+    scAct+=(scrollY/innerHeight*.55-scAct)*sigue(.07,dt);
     gl.uniform1f(U.sc,scAct);gl.uniform1f(U.amp,ampAct);
-    for(var i=0;i<3;i++)for(var j=0;j<3;j++)col[i][j]+=(meta[i][j]-col[i][j])*.06;
+    var kc=sigue(.05,dt);for(var i=0;i<3;i++)for(var j=0;j<3;j++)col[i][j]+=(meta[i][j]-col[i][j])*kc;
     gl.uniform2f(U.r,W,H);gl.uniform1f(U.t,tt);gl.uniform2f(U.m,mx,my);
     gl.uniform3fv(U.c1,col[0]);gl.uniform3fv(U.c2,col[1]);gl.uniform3fv(U.c3,col[2]);
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,3);
   }
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)requestAnimationFrame(frame)});
-  requestAnimationFrame(frame);setTimeout(function(){cv.classList.add('on')},300);
+  document.addEventListener('visibilitychange',arrancar);
+  arrancar();setTimeout(function(){cv.classList.add('on')},300);
 })();
